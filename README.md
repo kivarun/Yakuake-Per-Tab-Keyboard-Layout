@@ -1,34 +1,40 @@
 # Yakuake Per-Tab Keyboard Layout
 
-A small KWin script that remembers the keyboard layout independently for each Yakuake tab/session.
+A KWin script for Plasma 6 that remembers the keyboard layout independently for each Yakuake tab.
 
-Plasma can remember keyboard layouts per application, but all Yakuake tabs belong to the same application window. This script fills that gap by tracking the active Yakuake session and restoring its previously used keyboard layout.
+## Problem
 
-## Features
+Plasma can remember keyboard layouts per application, but all Yakuake tabs share the same window. Switching tabs resets the layout to whatever Plasma remembers for Yakuake as a whole, losing the layout you were using in each tab.
+
+## Behavior
 
 - Remembers a separate keyboard layout for each Yakuake tab/session.
 - Restores the saved layout when switching tabs.
-- Preserves the tab layout across Yakuake hide/show (`F12`).
-- New/unseen tabs start with keyboard layout index `0` (the first layout configured in Plasma).
-- No background daemon or systemd service.
-- Uses only KWin scripting plus the existing Yakuake and Plasma keyboard-layout D-Bus APIs.
+- Preserves the tab layout across Yakuake hide/show (F12).
+- New or unseen tabs default to the first keyboard layout configured in Plasma (index 0).
+- Manual layout changes are learned after a brief stability period to avoid capturing focus-driven transitions.
+- No background daemon or systemd service required.
 
 ## Requirements
 
-- KDE Plasma 6 / KWin 6
+- KDE Plasma 6 with KWin scripting support
 - Yakuake
+- The `org.kde.keyboard` D-Bus service (provided by Plasma)
 - Multiple keyboard layouts configured in Plasma
 
-Tested on Plasma 6 under Wayland. X11 has not been tested yet.
+**Tested on:** Plasma 6 / Wayland. X11 has not been tested.
 
-## Installation from source
+## Installation
 
 ```bash
 git clone https://github.com/kivarun/Yakuake-Per-Tab-Keyboard-Layout.git
 cd Yakuake-Per-Tab-Keyboard-Layout
-
 kpackagetool6 --type=KWin/Script -i .
+```
 
+## Enabling
+
+```bash
 kwriteconfig6 \
   --file kwinrc \
   --group Plugins \
@@ -37,7 +43,7 @@ kwriteconfig6 \
 qdbus6 org.kde.KWin /KWin reconfigure
 ```
 
-Verify that KWin loaded it:
+Verify the script loaded:
 
 ```bash
 qdbus6 org.kde.KWin /Scripting \
@@ -45,22 +51,16 @@ qdbus6 org.kde.KWin /Scripting \
   yakuake-layout
 ```
 
-Expected result:
-
-```text
-true
-```
+Expected output: `true`
 
 ## Updating
-
-From a checkout of the new version:
 
 ```bash
 kpackagetool6 --type=KWin/Script -u .
 qdbus6 org.kde.KWin /KWin reconfigure
 ```
 
-A logout/login can be useful when testing changes to a currently loaded KWin script.
+A logout/login cycle is recommended after updating a running KWin script.
 
 ## Uninstallation
 
@@ -74,31 +74,15 @@ kpackagetool6 --type=KWin/Script -r yakuake-layout
 qdbus6 org.kde.KWin /KWin reconfigure
 ```
 
-## How it works
+## How It Works
 
-The script listens to KWin active-window changes so it knows when Yakuake becomes active or inactive. While Yakuake is active, it polls Yakuake's active session and Plasma's current keyboard layout.
+The script listens to KWin active-window changes to detect when Yakuake is shown or hidden. While Yakuake is active, it polls Yakuake's active session and the current system keyboard layout via D-Bus.
 
-When a tab changes, the script remembers the layout of the tab being left and restores the saved layout of the destination tab. When Yakuake is shown again after being hidden, the saved layout is restored only after the activation sequence settles; a delayed verification prevents Plasma's own per-window layout restoration from overwriting the Yakuake tab state.
+When a tab changes, the script saves the layout of the tab being left and restores the remembered layout of the destination tab. After Yakuake is shown following a hide (F12), a delayed verification step ensures Plasma's own per-window layout handling does not overwrite the saved tab state.
 
-Manual layout changes are learned only after they remain stable for a short period. This avoids treating focus/activation layout changes as user choices.
+## Debugging
 
-## Configuration
-
-The constants near the top of `contents/code/main.js` control timing and the default layout.
-
-```js
-const DEFAULT_LAYOUT = 0;
-```
-
-`0` means the first keyboard layout configured in Plasma.
-
-Diagnostic logging is disabled by default. To enable it temporarily:
-
-```js
-const DEBUG = true;
-```
-
-Then watch KWin's user journal:
+Set `DEBUG = true` in `contents/code/main.js`, then watch KWin's journal:
 
 ```bash
 journalctl --user -f -o cat | grep YAKLAY

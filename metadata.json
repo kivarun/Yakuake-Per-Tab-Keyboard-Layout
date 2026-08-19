@@ -14,7 +14,7 @@
       }
     ],
     "Website": "https://github.com/kivarun/Yakuake-Per-Tab-Keyboard-Layout",
-    "BugAddress": "https://github.com/kivarun/Yakuake-Per-Tab-Keyboard-Layout/issues"
+    "BugReportUrl": "https://github.com/kivarun/Yakuake-Per-Tab-Keyboard-Layout/issues"
   },
   "X-Plasma-API": "javascript",
   "X-Plasma-MainScript": "code/main.js"

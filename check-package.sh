@@ -56,6 +56,25 @@ fi
 # LICENSE matches metadata
 check "LICENSE file mentions MIT" grep -q "MIT" LICENSE
 
+# kpackagetool6 isolated install test
+if command -v kpackagetool6 >/dev/null 2>&1; then
+    _tmpdir=$(mktemp -d)
+    _tmpdata="${_tmpdir}/local/share"
+    mkdir -p "$_tmpdata"
+    XDG_DATA_HOME="$_tmpdata" kpackagetool6 --type=KWin/Script -i . 2>/dev/null
+    _rc=$?
+    rm -rf "$_tmpdir"
+    if [ $_rc -eq 0 ]; then
+        echo "  [OK]   kpackagetool6 isolated install"
+        PASS=$((PASS + 1))
+    else
+        echo "  [FAIL] kpackagetool6 isolated install (exit $_rc)"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo "  [SKIP] kpackagetool6 isolated install (kpackagetool6 not available)"
+fi
+
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
 

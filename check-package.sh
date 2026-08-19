@@ -61,16 +61,14 @@ if command -v kpackagetool6 >/dev/null 2>&1; then
     _tmpdir=$(mktemp -d)
     _tmpdata="${_tmpdir}/local/share"
     mkdir -p "$_tmpdata"
-    XDG_DATA_HOME="$_tmpdata" kpackagetool6 --type=KWin/Script -i . 2>/dev/null
-    _rc=$?
-    rm -rf "$_tmpdir"
-    if [ $_rc -eq 0 ]; then
+    if XDG_DATA_HOME="$_tmpdata" kpackagetool6 --type=KWin/Script -i . 2>/dev/null; then
         echo "  [OK]   kpackagetool6 isolated install"
         PASS=$((PASS + 1))
     else
-        echo "  [FAIL] kpackagetool6 isolated install (exit $_rc)"
+        echo "  [FAIL] kpackagetool6 isolated install"
         FAIL=$((FAIL + 1))
     fi
+    rm -rf "$_tmpdir"
 else
     echo "  [SKIP] kpackagetool6 isolated install (kpackagetool6 not available)"
 fi

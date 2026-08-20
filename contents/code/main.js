@@ -31,6 +31,30 @@ let candidateSince = 0;
 let activationTarget = null;
 
 
+/*
+ * Declare timers before any function that references them to avoid
+ * KWin's "variable used before its declaration" warning. The connected
+ * handlers are function declarations and are hoisted, so they are
+ * available at this point.
+ */
+const activationTimer = new QTimer();
+activationTimer.singleShot = true;
+activationTimer.interval = ACTIVATE_DELAY;
+activationTimer.timeout.connect(restoreAfterActivation);
+
+
+const verifyTimer = new QTimer();
+verifyTimer.singleShot = true;
+verifyTimer.interval = VERIFY_DELAY;
+verifyTimer.timeout.connect(verifyAfterActivation);
+
+
+const pollTimer = new QTimer();
+pollTimer.interval = POLL_INTERVAL;
+pollTimer.timeout.connect(poll);
+pollTimer.start();
+
+
 function log(message) {
     if (DEBUG) {
         print("YAKLAY " + message);
@@ -54,9 +78,24 @@ function hasLayout(session) {
 }
 
 
+/*
+ * KWin may report different identifiers for the Yakuake window
+ * depending on the platform (X11 vs Wayland) and Plasma version.
+ * On some Plasma 6 / Wayland setups, resourceClass is "yakuake"
+ * instead of "org.kde.yakuake". Check all known identifiers to
+ * ensure reliable detection.
+ */
 function isYakuake(window) {
-    return window &&
-        window.resourceClass === "org.kde.yakuake";
+    if (!window) {
+        return false;
+    }
+
+    return (
+        window.resourceClass === "org.kde.yakuake" ||
+        window.resourceClass === "yakuake" ||
+        window.resourceName === "yakuake" ||
+        window.desktopFileName === "org.kde.yakuake"
+    );
 }
 
 
@@ -420,24 +459,6 @@ function verifyAfterActivation() {
         });
     });
 }
-
-
-const activationTimer = new QTimer();
-activationTimer.singleShot = true;
-activationTimer.interval = ACTIVATE_DELAY;
-activationTimer.timeout.connect(restoreAfterActivation);
-
-
-const verifyTimer = new QTimer();
-verifyTimer.singleShot = true;
-verifyTimer.interval = VERIFY_DELAY;
-verifyTimer.timeout.connect(verifyAfterActivation);
-
-
-const pollTimer = new QTimer();
-pollTimer.interval = POLL_INTERVAL;
-pollTimer.timeout.connect(poll);
-pollTimer.start();
 
 
 workspace.windowActivated.connect(function(window) {

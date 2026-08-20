@@ -324,6 +324,14 @@ function poll() {
             }
 
             /*
+             * The Yakuake tab changed. Cancel any pending activation
+             * verification so its stale target cannot overwrite the
+             * layout of the destination tab.
+             */
+            verifyTimer.stop();
+            activationTarget = null;
+
+            /*
              * The Yakuake tab changed. At this point the global layout
              * still belongs to the tab being left, so save it before
              * restoring the destination tab.

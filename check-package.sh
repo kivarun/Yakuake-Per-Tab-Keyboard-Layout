@@ -73,6 +73,30 @@ else
     echo "  [SKIP] kpackagetool6 isolated install (kpackagetool6 not available)"
 fi
 
+# Regression: stale activation verification on tab switch (v1.0.2)
+# poll() must cancel the verify timer when the active session changes,
+# otherwise verifyAfterActivation() can restore the wrong layout.
+check "poll cancels verifyTimer on session switch" \
+    python3 -c "
+import re, sys
+src = open('contents/code/main.js').read()
+# Find the poll function body
+m = re.search(r'function poll\(\)\s*\{(.*?)\n\}', src, re.DOTALL)
+if not m:
+    sys.exit(1)
+poll_body = m.group(1)
+# The session-switch block (where previous = currentSession) must
+# contain both verifyTimer.stop() and activationTarget = null
+# appearing BEFORE the restore call.
+switch_idx = poll_body.index('previous = currentSession')
+restore_idx = poll_body.index('restoreLayout(target)')
+block = poll_body[:restore_idx]
+if 'verifyTimer.stop()' not in block:
+    print('missing verifyTimer.stop()'); sys.exit(1)
+if 'activationTarget = null' not in block:
+    print('missing activationTarget = null'); sys.exit(1)
+"
+
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
 

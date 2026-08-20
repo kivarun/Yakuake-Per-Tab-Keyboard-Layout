@@ -85,12 +85,11 @@ m = re.search(r'function poll\(\)\s*\{(.*?)\n\}', src, re.DOTALL)
 if not m:
     sys.exit(1)
 poll_body = m.group(1)
-# The session-switch block (where previous = currentSession) must
-# contain both verifyTimer.stop() and activationTarget = null
-# appearing BEFORE the restore call.
-switch_idx = poll_body.index('previous = currentSession')
+# The session-switch block is between the same-tab path
+# (marked by maybeLearnLayout) and the restoreLayout call.
+same_tab_idx = poll_body.index('maybeLearnLayout')
 restore_idx = poll_body.index('restoreLayout(target)')
-block = poll_body[:restore_idx]
+block = poll_body[same_tab_idx:restore_idx]
 if 'verifyTimer.stop()' not in block:
     print('missing verifyTimer.stop()'); sys.exit(1)
 if 'activationTarget = null' not in block:

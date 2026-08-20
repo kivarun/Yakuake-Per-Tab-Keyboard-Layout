@@ -4,7 +4,7 @@
     "Name": "Yakuake Per-Tab Keyboard Layout",
     "Description": "Remembers the keyboard layout independently for each Yakuake tab. New tabs default to the first configured layout.",
     "Id": "yakuake-layout",
-    "Version": "1.0.1",
+    "Version": "1.0.2",
     "License": "MIT",
     "Category": "Utilities",
     "Authors": [
